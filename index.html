@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRO PIXEL STUDIO</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-cyan: #00ffff;
+            --dark-bg: #0a0012;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--dark-bg); color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden;
+            background-image: linear-gradient(rgba(255,0,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,0,255,0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            user-select: none;
+        }
+
+        /* Верхняя панель */
+        .toolbar {
+            background: rgba(20, 0, 30, 0.9); border-bottom: 2px solid var(--neon-pink);
+            padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;
+            width: 100%; box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 10;
+        }
+
+        .tools-left, .tools-right {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        }
+
+        .color-picker-wrapper {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 8px; border: 1px solid var(--neon-cyan);
+        }
+        input[type="color"] {
+            -webkit-appearance: none; border: none; width: 30px; height: 30px; cursor: pointer;
+            background: transparent; padding: 0; border-radius: 50%; overflow: hidden;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; }
+        
+        .quick-colors { display: flex; gap: 5px; }
+        .q-color {
+            width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid #fff;
+        }
+
+        .slider-group {
+            display: flex; align-items: center; gap: 8px; font-size: 12px;
+            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 8px; border: 1px solid #333;
+        }
+        input[type="range"] { cursor: pointer; accent-color: var(--neon-pink); }
+
+        button.action-btn {
+            background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan);
+            padding: 6px 15px; font-family: 'Share Tech Mono', monospace; font-size: 14px;
+            cursor: pointer; border-radius: 5px; text-transform: uppercase; font-weight: bold; transition: 0.2s;
+        }
+        button.action-btn:hover { background: var(--neon-cyan); color: var(--dark-bg); }
+        
+        button.download-btn { border-color: #00ff00; color: #00ff00; }
+        button.download-btn:hover { background: #00ff00; color: var(--dark-bg); }
+
+        button.donate-btn {
+            background: rgba(255, 0, 255, 0.2); color: var(--neon-pink);
+            border: 2px solid var(--neon-pink); padding: 6px 15px; border-radius: 8px;
+            font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s;
+            font-family: 'Share Tech Mono', monospace; display: flex; align-items: center; gap: 5px;
+        }
+        button.donate-btn:hover { background: var(--neon-pink); color: var(--dark-bg); box-shadow: 0 0 15px var(--neon-pink); }
+
+        .workspace {
+            flex-grow: 1; width: 100%; overflow: auto; display: flex; justify-content: center; align-items: center;
+            padding: 20px; box-sizing: border-box;
+        }
+
+        .canvas-container {
+            background-color: #1a1a1a; padding: 5px; border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0,255,255,0.3);
+            transform-origin: center center; transition: transform 0.1s ease-out;
+        }
+
+        canvas {
+            image-rendering: pixelated; background-color: #ffffff;
+            cursor: crosshair; display: block;
+        }
+
+        /* --- ОКНО ДОНАТА --- */
+        #donate-modal {
+            display: none; /* Изначально скрыто */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+
+        .modal-box {
+            background: var(--dark-bg); border: 2px solid var(--neon-pink);
+            padding: 30px; border-radius: 15px; text-align: center; width: 90%; max-width: 400px;
+            box-shadow: 0 0 30px var(--neon-pink); position: relative;
+        }
+
+        .modal-box h2 { color: var(--neon-pink); margin-top: 0; text-shadow: 0 0 10px var(--neon-pink); }
+        .modal-box p { color: #fff; line-height: 1.5; font-size: 15px; }
+        
+        .modal-buttons {
+            display: flex; justify-content: center; gap: 15px; margin-top: 25px;
+        }
+
+        .btn-donate {
+            background: var(--neon-pink); color: var(--dark-bg); text-decoration: none;
+            padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 16px;
+            display: inline-block; transition: 0.3s; border: 2px solid var(--neon-pink);
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .btn-donate:hover { background: #fff; box-shadow: 0 0 20px #fff; border-color: #fff; }
+
+        .btn-close {
+            background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan);
+            padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 16px;
+            cursor: pointer; transition: 0.3s; font-family: 'Share Tech Mono', monospace;
+        }
+        .btn-close:hover { background: var(--neon-cyan); color: var(--dark-bg); }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <div class="tools-left">
+            <div class="color-picker-wrapper">
+                <span>Цвет:</span>
+                <input type="color" id="color-wheel" value="#000000">
+                <div class="quick-colors">
+                    <div class="q-color" style="background: #000000" onclick="setColor('#000000')"></div>
+                    <div class="q-color" style="background: #ffffff" onclick="setColor('#ffffff')"></div>
+                    <div class="q-color" style="background: #ff0000" onclick="setColor('#ff0000')"></div>
+                    <div class="q-color" style="background: #00ff00" onclick="setColor('#00ff00')"></div>
+                    <div class="q-color" style="background: #0000ff" onclick="setColor('#0000ff')"></div>
+                </div>
+            </div>
+
+            <div class="slider-group">
+                <span>Сетка:</span>
+                <input type="range" id="size-slider" min="8" max="64" step="8" value="16">
+                <span id="size-label">16x16</span>
+            </div>
+
+            <div class="slider-group">
+                <span>Кисть:</span>
+                <input type="range" id="brush-slider" min="1" max="4" value="1">
+                <span id="brush-label">1px</span>
+            </div>
+
+            <div class="slider-group">
+                <span>Зум:</span>
+                <input type="range" id="zoom-slider" min="1" max="4" step="0.5" value="1">
+                <span id="zoom-label">100%</span>
+            </div>
+        </div>
+
+        <div class="tools-right">
+            <button type="button" class="action-btn" onclick="clearCanvas()">Очистить</button>
+            <button type="button" class="action-btn download-btn" onclick="downloadImage()">Скачать</button>
+            
+            <!-- Кнопка вызова окна -->
+            <button type="button" class="donate-btn" onclick="document.getElementById('donate-modal').style.display = 'flex'">
+                <span>❤️</span> Помощь автору
+            </button>
+        </div>
+    </div>
+
+    <div class="workspace" id="workspace">
+        <div class="canvas-container" id="canvas-container">
+            <canvas id="pixel-canvas"></canvas>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <div id="donate-modal">
+        <div class="modal-box">
+            <h2>Поддержка проекта</h2>
+            <p>Кому не сложно, поддержите копейкой для мотивации и финансирования дальнейших проектов!</p>
+            
+            <div class="modal-buttons">
+                <!-- Кнопка Доната (ведет на твою ссылку) -->
+                <a href="https://www.donationalerts.com/r/foidkiller666" target="_blank" class="btn-donate">
+                    💰 Задонатить
+                </a>
+                
+                <!-- Кнопка Закрыть -->
+                <button type="button" class="btn-close" onclick="document.getElementById('donate-modal').style.display = 'none'">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- КОД РИСОВАНИЯ ---
+        const canvas = document.getElementById('pixel-canvas');
+        const ctx = canvas.getContext('2d');
+        const sizeSlider = document.getElementById('size-slider');
+        const brushSlider = document.getElementById('brush-slider');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const colorWheel = document.getElementById('color-wheel');
+        const canvasContainer = document.getElementById('canvas-container');
+
+        let gridSize = 16;
+        let pixelSize = 30;
+        let currentColor = '#000000';
+        let brushSize = 1;
+        let isDrawing = false;
+        let lastX = null, lastY = null;
+
+        function drawGrid() {
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= gridSize; i++) {
+                ctx.beginPath(); ctx.moveTo(i * pixelSize, 0); ctx.lineTo(i * pixelSize, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * pixelSize); ctx.lineTo(canvas.width, i * pixelSize); ctx.stroke();
+            }
+        }
+
+        function initCanvas() {
+            canvas.width = gridSize * pixelSize;
+            canvas.height = gridSize * pixelSize;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawGrid(); 
+        }
+
+        function getCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: Math.floor(((clientX - rect.left) * scaleX) / pixelSize),
+                y: Math.floor(((clientY - rect.top) * scaleY) / pixelSize)
+            };
+        }
+
+        function drawPixel(x, y) {
+            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) return;
+            ctx.fillStyle = currentColor;
+            for (let i = 0; i < brushSize; i++) {
+                for (let j = 0; j < brushSize; j++) {
+                    if (x + i < gridSize && y + j < gridSize) {
+                        ctx.fillRect((x + i) * pixelSize, (y + j) * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+            drawGrid(); 
+        }
+
+        function handleStart(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const { x, y } = getCoordinates(e);
+            lastX = x; lastY = y;
+            drawPixel(x, y);
+        }
+
+        function handleMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const { x, y } = getCoordinates(e);
+            if (lastX !== null && lastY !== null) {
+                let dx = Math.abs(x - lastX), dy = Math.abs(y - lastY);
+                let sx = (lastX < x) ? 1 : -1, sy = (lastY < y) ? 1 : -1;
+                let err = dx - dy;
+                let currX = lastX, currY = lastY;
+                while (true) {
+                    drawPixel(currX, currY);
+                    if (currX === x && currY === y) break;
+                    let e2 = 2 * err;
+                    if (e2 > -dy) { err -= dy; currX += sx; }
+                    if (e2 < dx) { err += dx; currY += sy; }
+                }
+            } else {
+                drawPixel(x, y);
+            }
+            lastX = x; lastY = y;
+        }
+
+        function handleEnd() { isDrawing = false; lastX = null; lastY = null; }
+
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('touchstart', handleStart, {passive: false});
+        canvas.addEventListener('touchmove', handleMove, {passive: false});
+        window.addEventListener('touchend', handleEnd);
+
+        sizeSlider.addEventListener('change', (e) => {
+            gridSize = parseInt(e.target.value);
+            document.getElementById('size-label').innerText = `${gridSize}x${gridSize}`;
+            pixelSize = (gridSize <= 16) ? 30 : (gridSize <= 32) ? 20 : 12;
+            initCanvas();
+        });
+
+        brushSlider.addEventListener('input', (e) => {
+            brushSize = parseInt(e.target.value);
+            document.getElementById('brush-label').innerText = brushSize + 'px';
+        });
+
+        zoomSlider.addEventListener('input', (e) => {
+            canvasContainer.style.transform = `scale(${e.target.value})`;
+            document.getElementById('zoom-label').innerText = Math.round(e.target.value * 100) + '%';
+        });
+
+        colorWheel.addEventListener('input', (e) => currentColor = e.target.value);
+
+        function setColor(hex) {
+            currentColor = hex;
+            colorWheel.value = hex;
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+        }
+
+        function downloadImage() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = `sprite_${gridSize}x${gridSize}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        initCanvas();
+    </script>
+</body>
+</html>
